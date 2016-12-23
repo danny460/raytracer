@@ -128,7 +128,7 @@ void outputPPM(const Vector3f *image, unsigned int width, unsigned int height){
 
 //Generating Camera Ray for Tracing
 void render(const vector<Sphere> &sphereList, const vector<Sphere> &lightList){
-	unsigned int width = 1280, height = 960;
+	unsigned int width = 640, height = 480;
 	Vector3f *image = new Vector3f[width * height];
 	Vector3f *pixel = image;
 	Vector3f rayOri(0);
