@@ -78,10 +78,10 @@ class Sphere{
 //Only work with diffuse object. 
 Vector3f trace(const Vector3f &rayOri, const Vector3f &rayDir, const vector<Sphere> &sphereList, const vector<Sphere> &lightList){
 	float minLength = INFINITY;
-	float dOriginToHit = INFINITY;
 	const Sphere* hitSphere = NULL;
 	Vector3f surfaceColor(0);
 	for(int i = 0, length = sphereList.size() ; i < length ; i++){
+		float dOriginToHit = INFINITY;
 		if(sphereList[i].hasIntersection(rayOri, rayDir, dOriginToHit)){
 			if(minLength > dOriginToHit){
 				minLength = dOriginToHit;
@@ -90,18 +90,17 @@ Vector3f trace(const Vector3f &rayOri, const Vector3f &rayDir, const vector<Sphe
 		}
 	}
 	if(!hitSphere)
-		return surfaceColor; //return black;
+		return Vector3f(1); //return black;
 	else{
-		cout << "hit found" << endl;
 		Vector3f hitPoint = rayOri + ( rayDir *  minLength );
-		Vector3f hitNorm = (hitPoint - hitSphere -> center);
+		Vector3f hitNorm = hitPoint - hitSphere -> center;
 		hitNorm.normalise();
 		for(int i = 0, numOfLights = lightList.size(); i < numOfLights; i++){
 			float transmission = 1;
 			Vector3f dirToLight = lightList[i].center - hitPoint;
 			dirToLight.normalise(); 
-
 			for(int j = 0, numOfSpheres = sphereList.size(); i < numOfSpheres; i++){
+				float dOriginToHit = INFINITY;
 				if(sphereList[j].hasIntersection(hitPoint, dirToLight, dOriginToHit)){
 					transmission = 0;
 					break;
@@ -110,19 +109,21 @@ Vector3f trace(const Vector3f &rayOri, const Vector3f &rayDir, const vector<Sphe
 			surfaceColor += hitSphere -> color * lightList[i].emissionColor * transmission * max(float(0), hitNorm.dotProduct(dirToLight));
 		}
 	}
-	return surfaceColor + hitSphere -> emissionColor; 
+	//test
+	cout << surfaceColor.x << " " << surfaceColor.y << " " << surfaceColor.z << endl;
+	//
+	return surfaceColor; 
 }
 
 //Output Render result to PPM image
-void outputPPM(const Vector3f *image, const unsigned int width, const unsigned int height){
-	unsigned int maxColVal = 255;
+void outputPPM(const Vector3f *image, unsigned int width, unsigned int height){
 	std::ofstream ofs("./output.ppm", std::ios::out | std::ios::binary); 
-	ofs << "P6\n" << width << " " << height << "\n" << maxColVal <<"\n"; 
+	ofs << "P6\n" << width << " " << height << "\n255\n"; 
 	for(int i = 0, size = width * height ; i < size ; i++){
-		cout << i << "   :" << image[i].x << " " << image[i].y << " " << image[i].z << endl;
-		ofs << (unsigned char)(min(float(1), image[i].x) * maxColVal) 
-			<< (unsigned char)(min(float(1), image[i].y) * maxColVal)
-			<< (unsigned char)(min(float(1), image[i].z) * maxColVal); 
+		cout << image[i].x << "  " << image[i].y << "  " << image[i].z << endl;
+		ofs << (unsigned char)(min(float(1), image[i].x) * 255) 
+			<< (unsigned char)(min(float(1), image[i].y) * 255)
+			<< (unsigned char)(min(float(1), image[i].z) * 255); 
 	}
 	ofs.close();
 	delete [] image;
@@ -145,7 +146,7 @@ void render(const vector<Sphere> &sphereList, const vector<Sphere> &lightList){
 	for(int y = 0 ; y < height ; y++){
 		for(int x = 0 ; x < width; x++){
 			float dirX = (2 * (x + 0.5) * invWidth - 1) * aspectRatio * angle;
-			float dirY = (1 - 2 * (y + 0.5) * invHeight) * aspectRatio;
+			float dirY = (1 - 2 * (y + 0.5) * invHeight) * angle;
 			Vector3f rayDir(dirX,dirY,-1);
 			rayDir.normalise();
 			*(pixel++) = trace(rayOri, rayDir, sphereList, lightList); 
@@ -154,7 +155,6 @@ void render(const vector<Sphere> &sphereList, const vector<Sphere> &lightList){
 	//output ppm image
 	outputPPM(image , width, height);
 }
-
 
 
 int main(){
