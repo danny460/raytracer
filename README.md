@@ -1,7 +1,7 @@
 ###Ray Tracing
 =====
 #####1.Basic: rendering sphere, hard shadow, diffuse only.
-
+![alt text](https://github.com/danny460/raytracer/raw/master/basic/output.ppm "sample output 1")
 ######Todo
 ######1. Soft shadow
 ######2. Add transperancy and reflection
