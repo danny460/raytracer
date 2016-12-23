@@ -18,7 +18,7 @@ class Vector3 {
 		Vector3(T xVal, T yVal, T zVal): x(xVal),y(yVal),z(zVal){};
 		//operators
 		Vector3<T> operator+(const Vector3<T> &v ) const { return Vector3<T>( x + v.x, y + v.y, z + v.z); };	
-		Vector3<T> operator+=(const Vector3<T> &v)       { return Vector3<T>( x += v.x, y += v.y, z += v.z); return *this;};	
+		Vector3<T> operator+=(const Vector3<T> &v)       { x += v.x, y += v.y, z += v.z; return *this;};	
 		Vector3<T> operator-(const Vector3<T> &v ) const { return Vector3<T>( x - v.x, y - v.y, z - v.z); };
 		Vector3<T> operator-(					 ) const { return Vector3<T>( -x, -y, -z); };
 		Vector3<T> operator*(const Vector3<T> &v ) const { return Vector3<T>( x * v.x, y * v.y, z * v.z); };
@@ -90,18 +90,19 @@ Vector3f trace(const Vector3f &rayOri, const Vector3f &rayDir, const vector<Sphe
 		}
 	}
 	if(!hitSphere)
-		return Vector3f(1); //return black;
+		return Vector3f(1); //white background
 	else{
 		Vector3f hitPoint = rayOri + ( rayDir *  minLength );
 		Vector3f hitNorm = hitPoint - hitSphere -> center;
+		float bias = 1e-4;
 		hitNorm.normalise();
 		for(int i = 0, numOfLights = lightList.size(); i < numOfLights; i++){
 			float transmission = 1;
 			Vector3f dirToLight = lightList[i].center - hitPoint;
 			dirToLight.normalise(); 
-			for(int j = 0, numOfSpheres = sphereList.size(); i < numOfSpheres; i++){
+			for(int j = 0, numOfSpheres = sphereList.size(); j < numOfSpheres; j++){
 				float dOriginToHit = INFINITY;
-				if(sphereList[j].hasIntersection(hitPoint, dirToLight, dOriginToHit)){
+				if(sphereList[j].hasIntersection(hitPoint + hitNorm * bias, dirToLight, dOriginToHit)){
 					transmission = 0;
 					break;
 				}
@@ -109,10 +110,7 @@ Vector3f trace(const Vector3f &rayOri, const Vector3f &rayDir, const vector<Sphe
 			surfaceColor += hitSphere -> color * lightList[i].emissionColor * transmission * max(float(0), hitNorm.dotProduct(dirToLight));
 		}
 	}
-	//test
-	cout << surfaceColor.x << " " << surfaceColor.y << " " << surfaceColor.z << endl;
-	//
-	return surfaceColor; 
+	return surfaceColor + hitSphere -> emissionColor; 
 }
 
 //Output Render result to PPM image
@@ -120,7 +118,6 @@ void outputPPM(const Vector3f *image, unsigned int width, unsigned int height){
 	std::ofstream ofs("./output.ppm", std::ios::out | std::ios::binary); 
 	ofs << "P6\n" << width << " " << height << "\n255\n"; 
 	for(int i = 0, size = width * height ; i < size ; i++){
-		cout << image[i].x << "  " << image[i].y << "  " << image[i].z << endl;
 		ofs << (unsigned char)(min(float(1), image[i].x) * 255) 
 			<< (unsigned char)(min(float(1), image[i].y) * 255)
 			<< (unsigned char)(min(float(1), image[i].z) * 255); 
@@ -131,7 +128,7 @@ void outputPPM(const Vector3f *image, unsigned int width, unsigned int height){
 
 //Generating Camera Ray for Tracing
 void render(const vector<Sphere> &sphereList, const vector<Sphere> &lightList){
-	unsigned int width = 640, height = 480;
+	unsigned int width = 1280, height = 960;
 	Vector3f *image = new Vector3f[width * height];
 	Vector3f *pixel = image;
 	Vector3f rayOri(0);
