@@ -5,6 +5,9 @@
 #include <fstream> 
 #include <vector> 
 #include <iostream> 
+//
+#define MAX_RAY_DEPTH 3
+//
 using namespace std;
 // 3D Vectors
 template <typename T>
