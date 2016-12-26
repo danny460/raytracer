@@ -1,11 +1,13 @@
 //Based on basic
-//Add refractive / reflective material
+//Add reflectivity / transparency to material
 #include <cstdlib> 
 #include <cstdio> 
 #include <cmath>
 #include <fstream> 
 #include <vector> 
 #include <iostream> 
+#define MAX_RAY_DEPTH 3
+
 using namespace std;
 // 3D Vectors
 template <typename T>
@@ -14,7 +16,7 @@ class Vector3 {
 		//parameters
 		T x,y,z;
 		//constructors
-		Vector3(): x(0),y(0),z(0){};
+		Vector3(): x(0),y(0),z(0){}; 
 		Vector3(T val): x(val),y(val),z(val){};
 		Vector3(T xVal, T yVal, T zVal): x(xVal),y(yVal),z(zVal){};
 		//operators
@@ -44,13 +46,20 @@ class Sphere{
 	public:
 		//parameters 
 		Vector3f center, color, emissionColor;
-		float radius; 
+		float radius, transparency, reflectivity; 
 		// constructor
 		Sphere(	const Vector3f &centerVal, 
 				const Vector3f &colorVal, 
 				const Vector3f &emissionColorVal, 
-				const float &radiusVal) : 
-				center(centerVal), color(colorVal), emissionColor(emissionColorVal), radius(radiusVal){
+				const float &radiusVal,
+				const float &transparencyVal,
+				const float &reflectivityVal) : 
+				center(centerVal), 
+				color(colorVal), 
+				emissionColor(emissionColorVal), 
+				radius(radiusVal), 
+				transparency(transparencyVal), 
+				reflectivity(reflectivityVal){
 					//empty
 		};
 		//member function
@@ -72,12 +81,11 @@ class Sphere{
 					return true;
 				}
 			}
-			
 		};
 };
 //Calulate pixel color
 //Only work with diffuse object. 
-Vector3f trace(const Vector3f &rayOri, const Vector3f &rayDir, const vector<Sphere> &sphereList, const vector<Sphere> &lightList){
+Vector3f trace(const Vector3f &rayOri, const Vector3f &rayDir, const vector<Sphere> &sphereList, const vector<Sphere> &lightList, unsigned int &depth){
 	float minLength = INFINITY;
 	const Sphere* hitSphere = NULL;
 	Vector3f surfaceColor(0);
@@ -92,7 +100,20 @@ Vector3f trace(const Vector3f &rayOri, const Vector3f &rayDir, const vector<Sphe
 	}
 	if(!hitSphere)
 		return Vector3f(1); //white background
-	else{
+	if(( hitSphere -> reflectivity > 0 || hitSphere -> transparency > 0 ) && depth <= MAX_RAY_DEPTH){
+		//float fresnelEffect = 
+		Vector3f refRayDir = rayDir - 
+		depth++;
+		Vector3f reflection = ();
+		Vector3f refraction(0);
+
+
+		if( hitSphere -> transparency > 0){
+			//when sphere is also transparent;
+
+		}
+		surfaceColor = 
+	}else{
 		Vector3f hitPoint = rayOri + ( rayDir *  minLength );
 		Vector3f hitNorm = hitPoint - hitSphere -> center;
 		float bias = 1e-4;
@@ -128,7 +149,7 @@ void outputPPM(const Vector3f *image, unsigned int width, unsigned int height){
 }
 
 //Generating Camera Ray for Tracing
-void render(const vector<Sphere> &sphereList, const vector<Sphere> &lightList){
+void render(const vector<Sphere> &sphereList, const vector<Sphere> &lightList, const unsigned int depth){
 	unsigned int width = 640, height = 480;
 	Vector3f *image = new Vector3f[width * height];
 	Vector3f *pixel = image;
@@ -147,7 +168,7 @@ void render(const vector<Sphere> &sphereList, const vector<Sphere> &lightList){
 			float dirY = (1 - 2 * (y + 0.5) * invHeight) * angle;
 			Vector3f rayDir(dirX,dirY,-1);
 			rayDir.normalise();
-			*(pixel++) = trace(rayOri, rayDir, sphereList, lightList); 
+			*(pixel++) = trace(rayOri, rayDir, sphereList, lightList, depth); 
 		}
 	}
 	//output ppm image
@@ -158,6 +179,7 @@ void render(const vector<Sphere> &sphereList, const vector<Sphere> &lightList){
 int main(){
 	vector<Sphere> sphereList;			
 	vector<Sphere> lightList;
+	unsigned int depth = 0;
 	//create scene
 	//position,surface color, emission color, radius
 	sphereList.push_back(Sphere(Vector3f( 0.0, -10004, -20), Vector3f(0.20, 0.20, 0.20), Vector3f(0), 10000 )); 
@@ -167,5 +189,5 @@ int main(){
     sphereList.push_back(Sphere(Vector3f(-5.5,      0, -15), Vector3f(0.90, 0.90, 0.90), Vector3f(0),     3 )); 
     // light
     lightList.push_back( Sphere(Vector3f( 0.0,     20, -30), Vector3f(0.00, 0.00, 0.00), Vector3f(3), 	  0 )); 
-	render(sphereList, lightList);
+	render(sphereList, lightList, depth);
 }
